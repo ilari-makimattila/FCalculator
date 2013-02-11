@@ -2,14 +2,18 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.Workbench ActiveDocument="calculator/Program.fs">
     <Files>
-      <File FileName="calculator/Program.fs" Line="54" Column="17" />
-      <File FileName="../fsharptuto/Tutorial.fs" Line="64" Column="56" />
+      <File FileName="calculator/Program.fs" Line="5" Column="1" />
+      <File FileName="../fsharptuto/Tutorial.fs" Line="149" Column="18" />
+      <File FileName="README.md" Line="6" Column="80" />
+      <File FileName="FCalculator/Main.fs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="calculator" expanded="True">
-            <Node name="Program.fs" selected="True" />
+          <Node name="calculator" expanded="True" />
+          <Node name="FCalculator" expanded="True" />
+          <Node name="FCalculator.Tests" expanded="True">
+            <Node name="References" selected="True" />
           </Node>
         </State>
       </Pad>
@@ -17,14 +21,19 @@
         <State expanded="True" selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State />
+        <State>
+          <Value>str</Value>
+          <Value>m</Value>
+          <Value>out</Value>
+          <Value>previndex</Value>
+          <Value>mapping</Value>
+          <Value>res</Value>
+        </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore>
-      <Breakpoint file="/home/kryil/code/calculator/calculator/Program.fs" line="56" />
-    </BreakpointStore>
+    <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.ItemProperties.calculator>

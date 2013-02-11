@@ -3,19 +3,31 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "calculator", "calculator\calculator.fsproj", "{3798B85B-59F9-4B95-8332-BD19C1A955FF}"
 EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FCalculator", "FCalculator\FCalculator.fsproj", "{03D79043-6546-4713-9E1F-3AA88B3C7457}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FCalculator.Tests", "FCalculator.Tests\FCalculator.Tests.fsproj", "{E94B0A67-BA38-4000-8F9F-99E704FF827A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03D79043-6546-4713-9E1F-3AA88B3C7457}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{03D79043-6546-4713-9E1F-3AA88B3C7457}.Debug|x86.Build.0 = Debug|Any CPU
+		{03D79043-6546-4713-9E1F-3AA88B3C7457}.Release|x86.ActiveCfg = Release|Any CPU
+		{03D79043-6546-4713-9E1F-3AA88B3C7457}.Release|x86.Build.0 = Release|Any CPU
 		{3798B85B-59F9-4B95-8332-BD19C1A955FF}.Debug|x86.ActiveCfg = Debug|x86
 		{3798B85B-59F9-4B95-8332-BD19C1A955FF}.Debug|x86.Build.0 = Debug|x86
 		{3798B85B-59F9-4B95-8332-BD19C1A955FF}.Release|x86.ActiveCfg = Release|x86
 		{3798B85B-59F9-4B95-8332-BD19C1A955FF}.Release|x86.Build.0 = Release|x86
+		{E94B0A67-BA38-4000-8F9F-99E704FF827A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E94B0A67-BA38-4000-8F9F-99E704FF827A}.Debug|x86.Build.0 = Debug|Any CPU
+		{E94B0A67-BA38-4000-8F9F-99E704FF827A}.Release|x86.ActiveCfg = Release|Any CPU
+		{E94B0A67-BA38-4000-8F9F-99E704FF827A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = calculator\calculator.fsproj
+		StartupItem = FCalculator.Tests\FCalculator.Tests.fsproj
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.inheritsSet = null
