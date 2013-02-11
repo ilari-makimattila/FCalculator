@@ -10,19 +10,19 @@ type Node =
     | Multiply of Node * Node
     | Divide of Node * Node
 
-let rec Evaluate node =
+let rec Evaluate (m:Map<string,Node>) node =
     match node with
     | Value n -> n
-    | Add (l, r) -> Evaluate l + Evaluate r
-    | Substract (l, r) -> Evaluate l - Evaluate r
-    | Multiply (l, r) -> Evaluate l * Evaluate r
-    | Divide (l, r) -> Evaluate l / Evaluate r
+    | Add (l, r) -> Evaluate m l + Evaluate m r
+    | Substract (l, r) -> Evaluate m l - Evaluate m r
+    | Multiply (l, r) -> Evaluate m l * Evaluate m r
+    | Divide (l, r) -> Evaluate m l / Evaluate m r
 
 let ExtractOrCreateNode (mappings:Map<string,Node>) str =
     if mappings.ContainsKey str then
         mappings.[str]
     else
-        Value(System.Double.Parse(str))
+        Value (System.Double.Parse str)
 
 let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     match groups.[2].Value with
@@ -38,7 +38,7 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | "-" -> Substract(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
-    | _ -> Value(0.0) 
+    | _ -> Value 0.0
     
 let rec ParseHighRankingOperators (mappings:Map<string,Node>) str =
     let m = Regex("((?:\d+(?:\.\d+)?)|n\d+n)\s*(\*|/)\s*((?:\d+(?:\.\d+)?)|n\d+n)").Match(str)
@@ -68,10 +68,40 @@ let rec ParseLowRankingOperators (mappings:Map<string,Node>) str =
     else
         (mappings, str)
 
-let EvaluateString str =
-    let high = ParseHighRankingOperators Map.empty str
+let rec ParseString (mappings:Map<string,Node>) str =
+    let parens = ParseParentheses mappings str
+    let high = ParseHighRankingOperators (fst parens) (snd parens)
     let low = ParseLowRankingOperators (fst high) (snd high)
+    (fst low).[(snd low)]
     
-    let top = (fst low).[snd low]
+and ParseParentheses (mappings:Map<string,Node>) (str:string) =
+    let openIdx = str.IndexOf('(')
     
-    Evaluate top
+    if openIdx >= 0 then
+        
+        let s = str.Substring(openIdx + 1) 
+                |> Seq.takeWhile (fun c -> 
+                    let mutable pCount = 0
+                    if c = '(' then 
+                        pCount <- pCount + 1
+                    elif c = ')' then
+                        pCount <- pCount - 1
+                    pCount >= 0 && not (c = ')'))
+                |> Seq.map string
+                |> String.concat ""
+                
+        let node = ParseString mappings s
+        
+        let id = "n" + (string mappings.Count) + "n"
+        let nstr = str.[0..openIdx-1] + id + str.[openIdx+s.Length+2..str.Length-1]
+        let nmap = mappings.Add(id, node)
+        
+        (nmap, nstr)
+    else
+        (mappings, str)
+ 
+
+let EvaluateString str =
+    let top = ParseString Map.empty str
+    
+    Evaluate Map.empty top
