@@ -9,6 +9,8 @@ type Node =
     | Substract of Node * Node
     | Multiply of Node * Node
     | Divide of Node * Node
+    | Equality of Node * Node
+    | Inequality of Node * Node
 
 let rec Evaluate (m:Map<string,Node>) node =
     match node with
@@ -17,6 +19,8 @@ let rec Evaluate (m:Map<string,Node>) node =
     | Substract (l, r) -> Evaluate m l - Evaluate m r
     | Multiply (l, r) -> Evaluate m l * Evaluate m r
     | Divide (l, r) -> Evaluate m l / Evaluate m r
+    | Equality (l, r) -> if (Evaluate m l = Evaluate m r) then 1.0 else 0.0
+    | Inequality (l, r) -> if (Evaluate m l <> Evaluate m r) then 1.0 else 0.0
 
 let ExtractOrCreateNode (mappings:Map<string,Node>) str =
     if mappings.ContainsKey str then
@@ -38,10 +42,22 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | "-" -> Substract(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
-    | _ -> Value 0.0
+    | "=" -> Equality(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | "<>" -> Inequality(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | _ -> Value(0.0)
+ 
+let rec ParseOperators opers (mappings:Map<string,Node>) str =
+    let rx = "((?:\d+(?:\.\d+)?)|n\d+n)\s*(" +
+             (opers 
+             |> List.map (fun c -> Regex.Escape c)
+             |> String.concat "|") +
+             ")\s*((?:\d+(?:\.\d+)?)|n\d+n)"
     
-let rec ParseHighRankingOperators (mappings:Map<string,Node>) str =
-    let m = Regex("((?:\d+(?:\.\d+)?)|n\d+n)\s*(\*|/)\s*((?:\d+(?:\.\d+)?)|n\d+n)").Match(str)
+    let m = Regex(rx).Match(str)
     
     if m.Success then
         let id = "n" + (string mappings.Count) + "n"
@@ -50,29 +66,17 @@ let rec ParseHighRankingOperators (mappings:Map<string,Node>) str =
         let node = ParseGroups mappings m.Groups
         let nmap = mappings.Add(id, node)
     
-        ParseHighRankingOperators nmap nstr
-    else
-        (mappings, str)
-
-let rec ParseLowRankingOperators (mappings:Map<string,Node>) str =
-    let m = Regex("((?:\d+(?:\.\d+)?)|n\d+n)\s*(\+|\-)\s*((?:\d+(?:\.\d+)?)|n\d+n)").Match(str)
-
-    if m.Success then
-        let id = "n" + (string mappings.Count) + "n"
-    
-        let nstr = str.[0..m.Index-1] + id + str.[m.Index+m.Length..str.Length-1]
-        let node = ParseGroups mappings m.Groups
-        let nmap = mappings.Add(id, node)
-    
-        ParseLowRankingOperators nmap nstr
+        ParseOperators opers nmap nstr
     else
         (mappings, str)
 
 let rec ParseString (mappings:Map<string,Node>) str =
-    let parens = ParseParentheses mappings str
-    let high = ParseHighRankingOperators (fst parens) (snd parens)
-    let low = ParseLowRankingOperators (fst high) (snd high)
-    (fst low).[(snd low)]
+    let res = ParseParentheses mappings str
+              ||> ParseOperators ["*";"/"]
+              ||> ParseOperators ["+";"-"]
+              ||> ParseOperators ["="; "<>"]
+    
+    (fst res).[(snd res)]
     
 and ParseParentheses (mappings:Map<string,Node>) (str:string) =
     let openIdx = str.IndexOf('(')
@@ -87,7 +91,7 @@ and ParseParentheses (mappings:Map<string,Node>) (str:string) =
                         pCount := pCount.contents + 1
                     elif c = ')' then
                         pCount := pCount.contents - 1
-                    pCount.contents >= 0 || not (c = ')'))
+                    pCount.contents >= 0 || c <> ')')
                 |> Seq.map string
                 |> String.concat ""
         
