@@ -24,6 +24,14 @@ type ``Given EvaluateString is given a valid expression`` ()=
             EvaluateString "3 / 2" |> should equal 1.5
             
      [<Test>] member this.
+        ``when expression is 6 % 2 answer is 0.0`` ()=
+            EvaluateString "6 % 2" |> should equal 0.0 
+                  
+     [<Test>] member this.
+        ``when expression is 7 % 2 answer is 1.0`` ()=
+            EvaluateString "7 % 2" |> should equal 1.0 
+     
+     [<Test>] member this.
         ``when expression is 2 * 2 / 1 + 2 * 3 - 6 answer is 4.0`` ()=
             EvaluateString "2 * 2 / 1 + 2 * 3 - 6" |> should equal 4.0
             

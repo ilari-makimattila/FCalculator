@@ -9,6 +9,7 @@ type Node =
     | Substract of Node * Node
     | Multiply of Node * Node
     | Divide of Node * Node
+    | Modulo of Node * Node
     | Equality of Node * Node
     | Inequality of Node * Node
     | GreaterThan of Node * Node
@@ -23,6 +24,7 @@ let rec Evaluate (m:Map<string,Node>) node =
     | Substract (l, r) -> Evaluate m l - Evaluate m r
     | Multiply (l, r) -> Evaluate m l * Evaluate m r
     | Divide (l, r) -> Evaluate m l / Evaluate m r
+    | Modulo (l ,r) -> Evaluate m l % Evaluate m r
     | Equality (l, r) -> if (Evaluate m l = Evaluate m r) then 1.0 else 0.0
     | Inequality (l, r) -> if (Evaluate m l <> Evaluate m r) then 1.0 else 0.0
     | GreaterThan (l, r) -> if (Evaluate m l > Evaluate m r) then 1.0 else 0.0
@@ -48,6 +50,9 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
     | "-" -> Substract(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | "%" -> Modulo(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
     | "=" -> Equality(
@@ -92,7 +97,7 @@ let rec ParseOperators opers (mappings:Map<string,Node>) str =
 
 let rec ParseString (mappings:Map<string,Node>) str =
     let res = ParseParentheses mappings str
-              ||> ParseOperators ["*";"/"]
+              ||> ParseOperators ["*";"/";"%"]
               ||> ParseOperators ["+";"-"]
               ||> ParseOperators ["<";">";"<=";">="]
               ||> ParseOperators ["=";"<>"]
