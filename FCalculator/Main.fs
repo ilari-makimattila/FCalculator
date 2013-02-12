@@ -11,6 +11,10 @@ type Node =
     | Divide of Node * Node
     | Equality of Node * Node
     | Inequality of Node * Node
+    | GreaterThan of Node * Node
+    | LesserThan of Node * Node
+    | GreaterOrEqualThan of Node * Node
+    | LesserOrEqualThan of Node * Node
 
 let rec Evaluate (m:Map<string,Node>) node =
     match node with
@@ -21,6 +25,10 @@ let rec Evaluate (m:Map<string,Node>) node =
     | Divide (l, r) -> Evaluate m l / Evaluate m r
     | Equality (l, r) -> if (Evaluate m l = Evaluate m r) then 1.0 else 0.0
     | Inequality (l, r) -> if (Evaluate m l <> Evaluate m r) then 1.0 else 0.0
+    | GreaterThan (l, r) -> if (Evaluate m l > Evaluate m r) then 1.0 else 0.0
+    | LesserThan (l, r) -> if (Evaluate m l < Evaluate m r) then 1.0 else 0.0
+    | GreaterOrEqualThan (l, r) -> if (Evaluate m l >= Evaluate m r) then 1.0 else 0.0
+    | LesserOrEqualThan (l, r) -> if (Evaluate m l <= Evaluate m r) then 1.0 else 0.0
 
 let ExtractOrCreateNode (mappings:Map<string,Node>) str =
     if mappings.ContainsKey str then
@@ -48,7 +56,19 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | "<>" -> Inequality(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
-    | _ -> Value(0.0)
+    | "<" -> LesserThan(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | ">" -> GreaterThan(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | "<=" -> LesserOrEqualThan(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | ">=" -> GreaterOrEqualThan(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | _ -> raise (Exception "Invalid operator")
  
 let rec ParseOperators opers (mappings:Map<string,Node>) str =
     let rx = "((?:\d+(?:\.\d+)?)|n\d+n)\s*(" +
@@ -74,7 +94,8 @@ let rec ParseString (mappings:Map<string,Node>) str =
     let res = ParseParentheses mappings str
               ||> ParseOperators ["*";"/"]
               ||> ParseOperators ["+";"-"]
-              ||> ParseOperators ["="; "<>"]
+              ||> ParseOperators ["<";">";"<=";">="]
+              ||> ParseOperators ["=";"<>"]
     
     (fst res).[(snd res)]
     
