@@ -34,6 +34,10 @@ type ``Given EvaluateString is given a valid expression`` ()=
      [<Test>] member this.
         ``when expression is (1 + 2) * 3 answer is 9.0`` ()=
             EvaluateString "(1 + 2) * 3" |> should equal 9.0
+            
+     [<Test>] member this.
+        ``when expression is (1 + 1) * (1 + 1) answer is 4.0`` ()=
+            EvaluateString "(1 + 1) * (1 + 1)" |> should equal 4.0
                 
      [<Test>] member this.
         ``when expression is 2 * 2 / (1 + 2) * 3 - 6 answer is -2.0`` ()=

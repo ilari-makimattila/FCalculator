@@ -96,7 +96,7 @@ and ParseParentheses (mappings:Map<string,Node>) (str:string) =
         let nstr = str.[0..openIdx-1] + id + str.[openIdx+s.Length+2..str.Length-1]
         let nmap = mappings.Add(id, node)
         
-        (nmap, nstr)
+        ParseParentheses nmap nstr
     else
         (mappings, str)
  
