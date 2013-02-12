@@ -78,18 +78,19 @@ and ParseParentheses (mappings:Map<string,Node>) (str:string) =
     let openIdx = str.IndexOf('(')
     
     if openIdx >= 0 then
+    
+        let pCount = ref 0
         
         let s = str.Substring(openIdx + 1) 
                 |> Seq.takeWhile (fun c -> 
-                    let mutable pCount = 0
                     if c = '(' then 
-                        pCount <- pCount + 1
+                        pCount := pCount.contents + 1
                     elif c = ')' then
-                        pCount <- pCount - 1
-                    pCount >= 0 && not (c = ')'))
+                        pCount := pCount.contents - 1
+                    pCount.contents >= 0 || not (c = ')'))
                 |> Seq.map string
                 |> String.concat ""
-                
+        
         let node = ParseString mappings s
         
         let id = "n" + (string mappings.Count) + "n"
