@@ -49,6 +49,7 @@
     <Compile Include="BooleanTests.fs" />
     <Compile Include="Relationtests.fs" />
     <Compile Include="VariableTests.fs" />
+    <Compile Include="ConstantTests.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>

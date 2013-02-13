@@ -3,8 +3,11 @@ module FCalculator.Main
 open System
 open System.Text.RegularExpressions
 
+exception SyntaxError of string
+
 type Node =
     | Value of decimal
+    | QuotedString of string
     | Variable of string
     | Add of Node * Node
     | Substract of Node * Node
@@ -33,6 +36,7 @@ let equals (o1:Object) (o2:Object) =
 let rec Evaluate (m:Map<string,Object>) node =
     match node with
     | Value n -> box n
+    | QuotedString s -> upcast s
     | Variable s -> m.[s]
     | Add (l, r) -> box(todec(Evaluate m l) + todec(Evaluate m r))
     | Substract (l, r) -> box(todec(Evaluate m l) - todec(Evaluate m r))
@@ -95,7 +99,7 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | "||" -> LogicalOr(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
-    | _ -> raise (Exception "Invalid operator")
+    | _ -> raise (SyntaxError "Invalid operator")
  
 let HandleMatch (m:Match) (mappings:Map<string,Node>) (str:string) nodeCreator =
     let id = "¤" + (string mappings.Count) + "¤"
@@ -127,9 +131,44 @@ let TokenizeReservedWords (mappings:Map<string,Node>) (str:string) =
                 .Replace(" and ", " && ")
                 .Replace(" or ", " || ")
     (mappings, nstr)
+    
+let rec ParseQuotedStrings (mappings:Map<string,Node>) (str:string) =
+    let openIdx = str.IndexOf("\"")
+    
+    if openIdx >= 0 then
+        let escaped = ref false
+        
+        let s = str.Substring(openIdx + 1) 
+                |> Seq.takeWhile (fun c -> 
+                    if c = '\\' then 
+                        escaped := true
+                        true
+                    elif c = '"' then
+                        if !escaped then
+                            escaped := false
+                            true
+                        else
+                            false
+                    elif !escaped then
+                        raise (SyntaxError "Invalid quoted string escape!")
+                    else
+                        true)
+                |> Seq.map string
+                |> String.concat ""
+        
+        let node = QuotedString s
+        
+        let id = "¤" + (string mappings.Count) + "¤"
+        let nstr = str.[0..openIdx-1] + id + str.[openIdx+s.Length+2..str.Length-1]
+        let nmap = mappings.Add(id, node)
+        
+        ParseQuotedStrings nmap nstr
+    else
+        (mappings, str)
 
 let rec ParseString (mappings:Map<string,Node>) str =
-    let res = TokenizeReservedWords mappings str
+    let res = ParseQuotedStrings mappings str
+              ||> TokenizeReservedWords
               ||> ParseVariables
               ||> ParseParentheses
               ||> ParseOperators ["*";"/";"%"]
