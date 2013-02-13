@@ -4,7 +4,8 @@ open System
 open System.Text.RegularExpressions
 
 type Node =
-    | Value of float
+    | Value of decimal
+    | Variable of string
     | Add of Node * Node
     | Substract of Node * Node
     | Multiply of Node * Node
@@ -16,27 +17,36 @@ type Node =
     | LesserThan of Node * Node
     | GreaterOrEqualThan of Node * Node
     | LesserOrEqualThan of Node * Node
+    | LogicalAnd of Node * Node
+    | LogicalOr of Node * Node
 
-let rec Evaluate (m:Map<string,Node>) node =
+let todec (obj:Object) = Convert.ToDecimal obj
+let tobool (obj:Object) = Convert.ToBoolean obj
+
+let rec Evaluate (m:Map<string,Object>) node =
     match node with
-    | Value n -> n
-    | Add (l, r) -> Evaluate m l + Evaluate m r
-    | Substract (l, r) -> Evaluate m l - Evaluate m r
-    | Multiply (l, r) -> Evaluate m l * Evaluate m r
-    | Divide (l, r) -> Evaluate m l / Evaluate m r
-    | Modulo (l ,r) -> Evaluate m l % Evaluate m r
-    | Equality (l, r) -> if (Evaluate m l = Evaluate m r) then 1.0 else 0.0
-    | Inequality (l, r) -> if (Evaluate m l <> Evaluate m r) then 1.0 else 0.0
-    | GreaterThan (l, r) -> if (Evaluate m l > Evaluate m r) then 1.0 else 0.0
-    | LesserThan (l, r) -> if (Evaluate m l < Evaluate m r) then 1.0 else 0.0
-    | GreaterOrEqualThan (l, r) -> if (Evaluate m l >= Evaluate m r) then 1.0 else 0.0
-    | LesserOrEqualThan (l, r) -> if (Evaluate m l <= Evaluate m r) then 1.0 else 0.0
+    | Value n -> box n
+    | Variable s -> m.[s]
+    | Add (l, r) -> box(todec(Evaluate m l) + todec(Evaluate m r))
+    | Substract (l, r) -> box(todec(Evaluate m l) - todec(Evaluate m r))
+    | Multiply (l, r) -> box(todec(Evaluate m l) * todec(Evaluate m r))
+    | Divide (l, r) -> box(todec(Evaluate m l) / todec(Evaluate m r))
+    | Modulo (l ,r) -> box(todec(Evaluate m l) % todec(Evaluate m r))
+    | Equality (l, r) -> box(Evaluate m l = Evaluate m r)
+    | Inequality (l, r) -> box(Evaluate m l <> Evaluate m r)
+    | GreaterThan (l, r) -> box(todec(Evaluate m l) > todec(Evaluate m r))
+    | LesserThan (l, r) -> box(todec(Evaluate m l) < todec(Evaluate m r))
+    | GreaterOrEqualThan (l, r) -> box(todec(Evaluate m l) >= todec(Evaluate m r))
+    | LesserOrEqualThan (l, r) -> box(todec(Evaluate m l) <= todec(Evaluate m r))
+    | LogicalAnd (l, r) -> box(tobool(Evaluate m l) && tobool(Evaluate m r))
+    | LogicalOr (l, r) -> box(tobool(Evaluate m l) || tobool(Evaluate m r))
+
 
 let ExtractOrCreateNode (mappings:Map<string,Node>) str =
     if mappings.ContainsKey str then
         mappings.[str]
     else
-        Value (System.Double.Parse str)
+        Value (System.Decimal.Parse str)
 
 let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     match groups.[2].Value with
@@ -73,6 +83,12 @@ let ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | ">=" -> GreaterOrEqualThan(
                 ExtractOrCreateNode mappings groups.[1].Value,
                 ExtractOrCreateNode mappings groups.[3].Value)
+    | "and" -> LogicalAnd(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
+    | "or" -> LogicalOr(
+                ExtractOrCreateNode mappings groups.[1].Value,
+                ExtractOrCreateNode mappings groups.[3].Value)
     | _ -> raise (Exception "Invalid operator")
  
 let rec ParseOperators opers (mappings:Map<string,Node>) str =
@@ -101,6 +117,7 @@ let rec ParseString (mappings:Map<string,Node>) str =
               ||> ParseOperators ["+";"-"]
               ||> ParseOperators ["<";">";"<=";">="]
               ||> ParseOperators ["=";"<>"]
+              ||> ParseOperators ["and";"or"]
     
     (fst res).[(snd res)]
     
