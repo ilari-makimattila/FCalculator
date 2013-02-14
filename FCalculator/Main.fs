@@ -9,6 +9,7 @@ type Node =
     | Value of decimal
     | QuotedString of string
     | Variable of string
+    | Function of string * Node list
     | Add of Node * Node
     | Substract of Node * Node
     | Multiply of Node * Node
@@ -33,24 +34,25 @@ let equals (o1:Object) (o2:Object) =
     | :? string -> o1.ToString() = o2.ToString()
     | _ -> o1 = o2
         
-let rec Evaluate (m:Map<string,Object>) node =
+let rec Evaluate (f:Map<string, obj list -> obj>) (m:Map<string,Object>) node =
     match node with
     | Value n -> box n
     | QuotedString s -> upcast s
     | Variable s -> m.[s]
-    | Add (l, r) -> box(todec(Evaluate m l) + todec(Evaluate m r))
-    | Substract (l, r) -> box(todec(Evaluate m l) - todec(Evaluate m r))
-    | Multiply (l, r) -> box(todec(Evaluate m l) * todec(Evaluate m r))
-    | Divide (l, r) -> box(todec(Evaluate m l) / todec(Evaluate m r))
-    | Modulo (l ,r) -> box(todec(Evaluate m l) % todec(Evaluate m r))
-    | Equality (l, r) -> box(equals(Evaluate m l) (Evaluate m r))
-    | Inequality (l, r) -> box(not(equals(Evaluate m l) (Evaluate m r)))
-    | GreaterThan (l, r) -> box(todec(Evaluate m l) > todec(Evaluate m r))
-    | LesserThan (l, r) -> box(todec(Evaluate m l) < todec(Evaluate m r))
-    | GreaterOrEqualThan (l, r) -> box(todec(Evaluate m l) >= todec(Evaluate m r))
-    | LesserOrEqualThan (l, r) -> box(todec(Evaluate m l) <= todec(Evaluate m r))
-    | LogicalAnd (l, r) -> box(tobool(Evaluate m l) && tobool(Evaluate m r))
-    | LogicalOr (l, r) -> box(tobool(Evaluate m l) || tobool(Evaluate m r))
+    | Function (name, nodes) -> (f.[name] [ for n in nodes -> Evaluate f m n ])
+    | Add (l, r) -> box(todec(Evaluate f m l) + todec(Evaluate f m r))
+    | Substract (l, r) -> box(todec(Evaluate f m l) - todec(Evaluate f m r))
+    | Multiply (l, r) -> box(todec(Evaluate f m l) * todec(Evaluate f m r))
+    | Divide (l, r) -> box(todec(Evaluate f m l) / todec(Evaluate f m r))
+    | Modulo (l ,r) -> box(todec(Evaluate f m l) % todec(Evaluate f m r))
+    | Equality (l, r) -> box(equals(Evaluate f m l) (Evaluate f m r))
+    | Inequality (l, r) -> box(not(equals(Evaluate f m l) (Evaluate f m r)))
+    | GreaterThan (l, r) -> box(todec(Evaluate f m l) > todec(Evaluate f m r))
+    | LesserThan (l, r) -> box(todec(Evaluate f m l) < todec(Evaluate f m r))
+    | GreaterOrEqualThan (l, r) -> box(todec(Evaluate f m l) >= todec(Evaluate f m r))
+    | LesserOrEqualThan (l, r) -> box(todec(Evaluate f m l) <= todec(Evaluate f m r))
+    | LogicalAnd (l, r) -> box(tobool(Evaluate f m l) && tobool(Evaluate f m r))
+    | LogicalOr (l, r) -> box(tobool(Evaluate f m l) || tobool(Evaluate f m r))
 
 let ExtractOrCreateNode (mappings:Map<string,Node>) str =
     if mappings.ContainsKey str then
@@ -169,6 +171,7 @@ let rec ParseQuotedStrings (mappings:Map<string,Node>) (str:string) =
 let rec ParseString (mappings:Map<string,Node>) str =
     let res = ParseQuotedStrings mappings str
               ||> TokenizeReservedWords
+              ||> ParseFunctions
               ||> ParseVariables
               ||> ParseParentheses
               ||> ParseOperators ["*";"/";"%"]
@@ -206,7 +209,67 @@ and ParseParentheses (mappings:Map<string,Node>) (str:string) =
         ParseParentheses nmap nstr
     else
         (mappings, str)
+
+and ParseFunctions (mappings:Map<string,Node>) (str:string) =
+    let m = Regex("[a-z]\w*\s*\(", RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
+   
+    if m.Success then
+        let beginFunc = m.Index
+        let funcName = str.Substring(m.Index)
+                       |> Seq.takeWhile (fun c ->
+                            c <> ' ' && c <> '\t' && c <> '(')
+                       |> Seq.map string
+                       |> String.concat ""
         
+        let escape = ref false
+        let instring = ref false
+        let pCount = ref 0
+        
+        let mutable curParam = ""
+        let mutable funcParams = []
+        let mutable parsed = false
+        let mutable idx = str.IndexOf('(', m.Index + funcName.Length) + 1
+        
+        while not parsed do
+           let c = str.[idx]
+           idx <- idx + 1
+           match c with
+           | '"' -> if !instring then 
+                        if !escape then 
+                            escape := false
+                        else
+                            instring := false
+                    else
+                        instring := true
+           | '\\' -> if !instring then
+                        escape := true
+                     else
+                        raise (SyntaxError "Invalid escape")
+           | '(' -> if not !instring then
+                        pCount := !pCount + 1
+           | ')' -> if not !instring then
+                        pCount := !pCount - 1
+                        parsed <- true
+           | ',' -> if not !instring then
+                        funcParams <- List.append funcParams [curParam]
+                        curParam <- ""
+           | _ -> ()
+           if not parsed then curParam <- curParam + (string c)
+
+        if curParam.Length > 0 then 
+            funcParams <- List.append funcParams [curParam]
+
+        let fp = funcParams
+        let node = Function(funcName, [for p in fp -> ParseString mappings p])
+        
+        let id = "¤" + (string mappings.Count) + "¤"
+        let nstr = str.[0..m.Index-1] + id + str.[idx..str.Length-1]
+        let nmap = mappings.Add(id, node)
+        
+        (nmap, nstr)
+    else
+        (mappings, str)
+
 and ParseVariables (mappings:Map<string,Node>) (str:string) =
     let m = Regex("([a-z]\w*)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
    
@@ -217,9 +280,10 @@ and ParseVariables (mappings:Map<string,Node>) (str:string) =
  
 
 let EvaluateString str =
-    let top = ParseString Map.empty str
-    
-    Evaluate Map.empty top
+    ParseString Map.empty str |> Evaluate Map.empty Map.empty
 
 let EvaluateStringWithVariables variables str =
-    ParseString Map.empty str |> Evaluate variables
+    ParseString Map.empty str |> Evaluate Map.empty variables
+    
+let EvaluateStringWithFunctions funcs str =
+    ParseString Map.empty str |> Evaluate funcs Map.empty
