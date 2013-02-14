@@ -278,7 +278,7 @@ and ParseFunctions (mappings:Map<string,Node>) (str:string) =
         let nstr = str.[0..m.Index-1] + id + str.[idx..str.Length-1]
         let nmap = mappings.Add(id, node)
         
-        (nmap, nstr)
+        ParseFunctions nmap nstr
     else
         (mappings, str)
 

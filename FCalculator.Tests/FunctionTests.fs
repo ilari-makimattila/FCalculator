@@ -29,3 +29,7 @@ type ``Given EvaluateStringWithFunctions has a map of funcs and a valid expressi
         ``when expression is mul(3, 9) answer is 27`` ()=    
             EvaluateStringWithFunctions f "mul(3, 9)" |> should equal 27.0m
             
+    [<Test>] member x.
+        ``when expression is mul(3, 9) - square(5) answer is 2`` ()=    
+            EvaluateStringWithFunctions f "mul(3, 9) - square(5)" |> should equal 2.0m
+            
