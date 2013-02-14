@@ -237,6 +237,7 @@ and ParseFunctions (mappings:Map<string,Node>) (str:string) =
         let mutable curParam = ""
         let mutable funcParams = []
         let mutable parsed = false
+        let mutable skip = false
         let mutable idx = str.IndexOf('(', m.Index + funcName.Length) + 1
         
         while not parsed do
@@ -260,13 +261,15 @@ and ParseFunctions (mappings:Map<string,Node>) (str:string) =
                         pCount := !pCount - 1
                         parsed <- true
            | ',' -> if not !instring then
-                        funcParams <- List.append funcParams [curParam]
+                        funcParams <- List.append funcParams [curParam.Trim([|' '; '\t'|])]
                         curParam <- ""
+                        skip <- true
            | _ -> ()
-           if not parsed then curParam <- curParam + (string c)
+           if not parsed && not skip then curParam <- curParam + (string c)
+           skip <- false
 
         if curParam.Length > 0 then 
-            funcParams <- List.append funcParams [curParam]
+            funcParams <- List.append funcParams [curParam.Trim([|' '; '\t'|])]
 
         let fp = funcParams
         let node = Function(funcName, [for p in fp -> ParseString mappings p])
