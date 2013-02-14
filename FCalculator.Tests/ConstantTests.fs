@@ -8,6 +8,14 @@ open FCalculator.Main
 type ``Given EvaluateString parameter has constants`` ()=
 
     [<Test>] member x.
+        ``when expression is 2 answer is 2`` ()=
+            EvaluateString "2" |> should equal 2.0m
+
+    [<Test>] member x.
+        ``when expression is 2.5 answer is 2.5`` ()=
+            EvaluateString "2.5" |> should equal 2.5m
+
+    [<Test>] member x.
         ``when expression is "foo" = "foo" answer is true`` ()=
             EvaluateString "\"foo\" = \"foo\"" |> should equal true
             

@@ -168,6 +168,14 @@ let rec ParseQuotedStrings (mappings:Map<string,Node>) (str:string) =
     else
         (mappings, str)
 
+let ParseValues mappings str =
+    let m = Regex("(?:^\d+(?:\.\d+)?$)|(\s\d+(?:\.\d+)?\s)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
+    
+    if m.Success then
+        HandleMatch m mappings str (fun m g -> ExtractOrCreateNode m g.[0].Value)
+    else
+        (mappings, str)
+
 let rec ParseString (mappings:Map<string,Node>) str =
     let res = ParseQuotedStrings mappings str
               ||> TokenizeReservedWords
@@ -179,6 +187,7 @@ let rec ParseString (mappings:Map<string,Node>) str =
               ||> ParseOperators ["<";">";"<=";">="]
               ||> ParseOperators ["=";"<>"]
               ||> ParseOperators ["&&";"||"]
+              ||> ParseValues
     
     (fst res).[(snd res)]
     
