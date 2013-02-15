@@ -4,7 +4,7 @@ open System.Runtime.CompilerServices
 
 
 [<assembly: AssemblyTitle("FCalculator")>]
-[<assembly: AssemblyDescription("")>]
+[<assembly: AssemblyDescription("A mathematical expression parser and evaluator")>]
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
 [<assembly: AssemblyProduct("")>]
@@ -13,7 +13,7 @@ open System.Runtime.CompilerServices
 
 // The assembly version has the format {Major}.{Minor}.{Build}.{Revision}
 
-[<assembly: AssemblyVersion("1.0.0.0")>]
+[<assembly: AssemblyVersion("0.5.0.0")>]
 
 //[<assembly: AssemblyDelaySign(false)>]
 //[<assembly: AssemblyKeyFile("")>]

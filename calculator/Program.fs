@@ -1,13 +1,12 @@
 module calculator.Main
 
 open System
-open FCalculator.Main
+open FCalculator.Evaluator
 
 [<EntryPoint>]
 let main args = 
     let str = String.Join(" ", args)
     
-    
-    printfn "%A" (EvaluateString str)
+    printfn "%A" (EvaluateExpression str)
     0
 
