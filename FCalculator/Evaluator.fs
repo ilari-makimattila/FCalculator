@@ -14,6 +14,43 @@ let private equals (o1:obj) (o2:obj) =
     | :? string -> o1.ToString() = o2.ToString()
     | _ -> o1 = o2
 
+// construct builtin functions
+let private builtins = 
+    let l = [
+        ("if", fun (args:obj list) -> if tobool(args.[0]) then args.[1] else args.[2])
+        ("not", fun (args:obj list) -> box(not(tobool args.[0])))
+        ("in", fun (args:obj list) -> box(List.exists (fun i -> i = args.Head) args.Tail))
+    ]
+    new Map<string, obj list -> obj>(l)
+
+// construct builtin variables
+let private constants =
+    let l = [
+        ("true", box true)
+        ("false", box false)
+    ]
+    new Map<string, obj>(l)
+
+let rec private Eval (f:Map<string, obj list -> obj>) (v:Map<string,obj>) node =
+    match node with
+    | Value n -> box n
+    | QuotedString s -> upcast s
+    | Variable s -> v.[s]
+    | Function (name, nodes) -> (f.[name] [ for n in nodes -> Eval f v n ])
+    | Add (l, r) -> box(todec(Eval f v l) + todec(Eval f v r))
+    | Substract (l, r) -> box(todec(Eval f v l) - todec(Eval f v r))
+    | Multiply (l, r) -> box(todec(Eval f v l) * todec(Eval f v r))
+    | Divide (l, r) -> box(todec(Eval f v l) / todec(Eval f v r))
+    | Modulo (l ,r) -> box(todec(Eval f v l) % todec(Eval f v r))
+    | Equality (l, r) -> box(equals(Eval f v l) (Eval f v r))
+    | Inequality (l, r) -> box(not(equals(Eval f v l) (Eval f v r)))
+    | GreaterThan (l, r) -> box(todec(Eval f v l) > todec(Eval f v r))
+    | LesserThan (l, r) -> box(todec(Eval f v l) < todec(Eval f v r))
+    | GreaterOrEqualThan (l, r) -> box(todec(Eval f v l) >= todec(Eval f v r))
+    | LesserOrEqualThan (l, r) -> box(todec(Eval f v l) <= todec(Eval f v r))
+    | LogicalAnd (l, r) -> box(tobool(Eval f v l) && tobool(Eval f v r))
+    | LogicalOr (l, r) -> box(tobool(Eval f v l) || tobool(Eval f v r))
+
 /// <summary>Evaluates the given node with given functions and variables</summary>
 /// <param name="functions">A map of functions</param>
 /// <param name="variables">A map of variables</param>
@@ -23,25 +60,16 @@ let private equals (o1:obj) (o2:obj) =
 /// <remarks>
 /// Function and variable names are case sensitive.
 /// </remarks>
-let rec Evaluate (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>) node =
-    match node with
-    | Value n -> box n
-    | QuotedString s -> upcast s
-    | Variable s -> variables.[s]
-    | Function (name, nodes) -> (functions.[name] [ for n in nodes -> Evaluate functions variables n ])
-    | Add (l, r) -> box(todec(Evaluate functions variables l) + todec(Evaluate functions variables r))
-    | Substract (l, r) -> box(todec(Evaluate functions variables l) - todec(Evaluate functions variables r))
-    | Multiply (l, r) -> box(todec(Evaluate functions variables l) * todec(Evaluate functions variables r))
-    | Divide (l, r) -> box(todec(Evaluate functions variables l) / todec(Evaluate functions variables r))
-    | Modulo (l ,r) -> box(todec(Evaluate functions variables l) % todec(Evaluate functions variables r))
-    | Equality (l, r) -> box(equals(Evaluate functions variables l) (Evaluate functions variables r))
-    | Inequality (l, r) -> box(not(equals(Evaluate functions variables l) (Evaluate functions variables r)))
-    | GreaterThan (l, r) -> box(todec(Evaluate functions variables l) > todec(Evaluate functions variables r))
-    | LesserThan (l, r) -> box(todec(Evaluate functions variables l) < todec(Evaluate functions variables r))
-    | GreaterOrEqualThan (l, r) -> box(todec(Evaluate functions variables l) >= todec(Evaluate functions variables r))
-    | LesserOrEqualThan (l, r) -> box(todec(Evaluate functions variables l) <= todec(Evaluate functions variables r))
-    | LogicalAnd (l, r) -> box(tobool(Evaluate functions variables l) && tobool(Evaluate functions variables r))
-    | LogicalOr (l, r) -> box(tobool(Evaluate functions variables l) || tobool(Evaluate functions variables r))
+let Evaluate (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>) node =
+    let mutable funcs = builtins
+    for t in functions do
+        funcs <- funcs.Add(t.Key, functions.[t.Key])                  
+    
+    let mutable vars = constants
+    for t in variables do
+        vars <- vars.Add(t.Key, variables.[t.Key])
+    
+    Eval funcs vars node
 
 /// Parse and evaluate a string
 let EvaluateExpression str =

@@ -33,3 +33,16 @@ type ``Given EvaluateExpressionWithFunctions has a map of funcs and a valid expr
         ``when expression is mul(3, 9) - square(5) answer is 2`` ()=    
             EvaluateExpressionWithFunctions f "mul(3, 9) - square(5)" |> should equal 2.0m
             
+    [<Test>] member x.
+        ``when expression is if (0, 1, 2) then the answer is 2`` ()=
+            EvaluateExpression "if (0, 1, 2)" |> should equal 2.0m
+            
+    [<Test>] member x.
+        ``when expression is in (1 + 1, 1, 2) then the answer is true`` ()=
+            EvaluateExpression "in (1 + 1, 1, 2)" |> should equal true
+            
+    [<Test>] member x.
+        ``when expression is not(false) then the answer is true`` ()=
+            EvaluateExpression "not(false)" |> should equal true
+            
+            
