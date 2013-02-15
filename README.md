@@ -34,6 +34,7 @@ let result = EvaluateExpressionWithFunctionsAndVariables myFuncs myVars "multipl
 open FCalculator.Parser
 
 let topNode = ParseExpression "1 * (2 + 2) / 4" 
+```
 
 ## Why?
 
