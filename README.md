@@ -28,6 +28,8 @@ let myVars = [ ("x", box 4); ("y", box 2) ] |> Map.ofList
 let result = EvaluateExpressionWithFunctionsAndVariables myFuncs myVars "multiply(x, y)"
 ```
 
+Function and variable names are always case sensitive.
+
 ### Parsing without evaluating
 
 ```fsharp
@@ -36,7 +38,13 @@ open FCalculator.Parser
 let topNode = ParseExpression "1 * (2 + 2) / 4" 
 ```
 
+## Bugs
+
+There is no error handling. You might get a SyntaxError exception but they're
+thrown only because something needs to be returned in those cases.
+
 ## Why?
 
 This was my first touch to functional programming and I thought that writing
-a string parser and evaluating expression trees would be a fun exercise. And it was.
+a string parser and evaluating expression trees would be a fun exercise. 
+And it was.
