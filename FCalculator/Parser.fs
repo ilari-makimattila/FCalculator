@@ -16,46 +16,22 @@ let private ExtractOrCreateNode (mappings:Map<string,Node>) str =
 
 /// Creates a node from regex match groups
 let private ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
+    let node1 = ExtractOrCreateNode mappings groups.[1].Value
+    let node2 = ExtractOrCreateNode mappings groups.[3].Value
     match groups.[2].Value with
-    | "*" -> Multiply(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "/" -> Divide(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "+" -> Add(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "-" -> Substract(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "%" -> Modulo(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "=" -> Equality(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "<>" -> Inequality(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "<" -> LesserThan(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | ">" -> GreaterThan(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "<=" -> LesserOrEqualThan(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | ">=" -> GreaterOrEqualThan(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "&&" -> LogicalAnd(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
-    | "||" -> LogicalOr(
-                ExtractOrCreateNode mappings groups.[1].Value,
-                ExtractOrCreateNode mappings groups.[3].Value)
+    | "*" -> Multiply(node1, node2)
+    | "/" -> Divide(node1, node2)
+    | "+" -> Add(node1, node2)
+    | "-" -> Substract(node1, node2)
+    | "%" -> Modulo(node1, node2)
+    | "=" -> Equality(node1, node2)
+    | "<>" -> Inequality(node1, node2)
+    | "<" -> LesserThan(node1, node2)
+    | ">" -> GreaterThan(node1, node2)
+    | "<=" -> LesserOrEqualThan(node1, node2)
+    | ">=" -> GreaterOrEqualThan(node1, node2)
+    | "&&" -> LogicalAnd(node1, node2)
+    | "||" -> LogicalOr(node1, node2)
     | _ -> raise (SyntaxError "Invalid operator")
  
 /// Helper for handling a regex match
