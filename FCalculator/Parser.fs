@@ -186,7 +186,8 @@ let rec internal ParseString mappings str =
               ||> ParseOperators ["+";"-"]
               ||> ParseOperators ["<";">";"<=";">="]
               ||> ParseOperators ["=";"<>"]
-              ||> ParseOperators ["&&";"||"]
+              ||> ParseOperators ["&&"]
+              ||> ParseOperators ["||"]
               ||> ParseValues
     
     let d = fst res

@@ -3,6 +3,8 @@ module FCalculator.Tests.Boolean
 open NUnit.Framework
 open FsUnit
 open FCalculator.Evaluator
+open FCalculator.Parser
+open FCalculator.Main
 
 [<TestFixture>]
 type ``Given EvaluateExpression is given a valid boolean expression`` ()=
@@ -58,3 +60,8 @@ type ``Given EvaluateExpression is given a valid boolean expression`` ()=
     [<Test>] member x.
         ``when expression is not false then the answer is true`` ()=
             EvaluateExpression "not false" |> should equal true
+    
+    [<Test>] member x.
+        ``when expression is "true or false and true" the and operator should have higher priority`` ()=
+            ParseExpression "true or false and true" 
+            |> should equal (LogicalOr(Variable("true"), LogicalAnd(Variable("false"), Variable("true"))))
