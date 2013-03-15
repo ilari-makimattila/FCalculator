@@ -157,7 +157,7 @@ let private ParseValues mappings str =
         (mappings, str)
 
 /// Parses variable definitions
-let private ParseVariables mappings str =
+let rec private ParseVariables mappings str =
     let m = Regex(
                 "([a-z]\w*)", 
                 RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
@@ -169,6 +169,7 @@ let private ParseVariables mappings str =
             mappings 
             str 
             (Variable(m.Groups.[1].Value))
+        ||> ParseVariables
     else
         (mappings, str)
 
