@@ -62,7 +62,7 @@ let rec private Eval (f:Map<string, obj list -> obj>) (v:Map<string,obj>) node =
 /// <remarks>
 /// Function and variable names are case sensitive.
 /// </remarks>
-let Evaluate (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>) node =
+let EvaluateWithFunctionsAndVariables (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>) node =
     let mutable funcs = builtins
     for t in functions do
         funcs <- funcs.Add(t.Key, functions.[t.Key])                  
@@ -73,18 +73,22 @@ let Evaluate (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>
     
     Eval funcs vars node
 
+/// Evaluate given node
+let Evaluate node =
+    EvaluateWithFunctionsAndVariables Map.empty Map.empty node
+
 /// Parse and evaluate a string
 let EvaluateExpression str =
-    ParseString Map.empty str |> Evaluate Map.empty Map.empty
+    ParseString Map.empty str |> EvaluateWithFunctionsAndVariables Map.empty Map.empty
 
 /// Parse and evaluate a string with custom variables
 let EvaluateExpressionWithVariables variables str =
-    ParseString Map.empty str |> Evaluate Map.empty variables
+    ParseString Map.empty str |> EvaluateWithFunctionsAndVariables Map.empty variables
 
 /// Parse and evaluate a string with custom functions
 let EvaluateExpressionWithFunctions funcs str =
-    ParseString Map.empty str |> Evaluate funcs Map.empty
+    ParseString Map.empty str |> EvaluateWithFunctionsAndVariables funcs Map.empty
 
 /// Parse and evaluate a strin with custom functions and variables
 let EvaluateExpressionWithFunctionsAndVariables functions variables str =
-    ParseString Map.empty str |> Evaluate functions variables
+    ParseString Map.empty str |> EvaluateWithFunctionsAndVariables functions variables
