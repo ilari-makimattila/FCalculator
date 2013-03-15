@@ -36,6 +36,7 @@ let rec private Eval (f:Map<string, obj list -> obj>) (v:Map<string,obj>) node =
     | Value n -> box n
     | QuotedString s -> upcast s
     | Variable s -> v.[s]
+    | Date s -> box(System.DateTime.Parse s)
     | Function (name, nodes) -> (f.[name] [ for n in nodes -> Eval f v n ])
     | Add (l, r) -> box(todec(Eval f v l) + todec(Eval f v r))
     | Substract (l, r) -> box(todec(Eval f v l) - todec(Eval f v r))

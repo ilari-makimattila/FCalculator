@@ -100,6 +100,17 @@ let rec private ParseQuotedStrings (mappings:Map<string,Node>) (str:string) =
     else
         (mappings, str)
 
+/// Parses datetime values like #2013-03-15 12:34:56#
+let rec private ParseDateTimes mappings str =
+    let m = Regex("#(.*?)#", RegexOptions.Compiled).Match(str)
+    
+    if m.Success then
+        HandleMatch (m.Index-1) (m.Index+m.Length) mappings str (Date m.Groups.[1].Value)
+        ||> ParseDateTimes
+    else
+        (mappings, str)
+    
+
 /// Parses constant values, such as function parameters, from the formula
 let private ParseValues mappings str =
     let m = Regex(
@@ -119,6 +130,7 @@ let private ParseValues mappings str =
 /// Parses the given string to an expression tree
 let rec internal ParseString mappings str =
     let res = ParseQuotedStrings mappings str
+              ||> ParseDateTimes
               ||> TokenizeReservedWords
               ||> ParseFunctions
               ||> ParseVariables

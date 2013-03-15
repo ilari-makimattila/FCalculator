@@ -7,6 +7,7 @@ type Node =
     | Value of decimal
     | QuotedString of string
     | Variable of string
+    | Date of string
     | Function of string * Node list
     | Add of Node * Node
     | Substract of Node * Node
