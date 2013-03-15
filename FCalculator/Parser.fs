@@ -15,7 +15,7 @@ let private ExtractOrCreateNode (mappings:Map<string,Node>) str =
         Value (Decimal.Parse str)
 
 /// Creates a node from regex match groups
-let private ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
+let private ParseInfixGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     let node1 = ExtractOrCreateNode mappings groups.[1].Value
     let node2 = ExtractOrCreateNode mappings groups.[3].Value
     match groups.[2].Value with
@@ -32,8 +32,15 @@ let private ParseGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
     | ">=" -> GreaterOrEqualThan(node1, node2)
     | "&&" -> LogicalAnd(node1, node2)
     | "||" -> LogicalOr(node1, node2)
-    | _ -> raise (SyntaxError "Invalid operator")
- 
+    | _ -> raise (SyntaxError ("Invalid infix operator " + groups.[2].Value))
+
+let private ParseUnaryGroups (mappings:Map<string,Node>) (groups:GroupCollection) =
+    let node = ExtractOrCreateNode mappings groups.[2].Value
+    match groups.[1].Value with
+    | "!" -> Not(node)
+    | "-" -> Negation(node)
+    | _ -> raise (SyntaxError ("Invalid prefix operator " + groups.[1].Value))
+
 /// Helper for handling a regex match
 let private HandleMatch start stop (mappings:Map<string,Node>) (str:string) node =
     let id = "¤" + (string mappings.Count) + "¤"
@@ -56,8 +63,29 @@ let rec private ParseOperators opers mappings str =
             (m.Index+m.Length) 
             mappings
             str
-            (ParseGroups mappings m.Groups)
+            (ParseInfixGroups mappings m.Groups)
         ||> ParseOperators opers
+    else
+        (mappings, str)
+
+/// Parses the given prefix unary operators from the formula
+let rec private ParseUnaryOperators opers mappings str =
+    let rx = "(?:^|(?:[+\-*/%&|=<>!])\s*)(" +
+             (opers 
+             |> List.map (fun c -> Regex.Escape c)
+             |> String.concat "|") +
+             ")\s*((?:\d+(?:\.\d+)?)|¤\d+¤)"
+    
+    let m = Regex(rx).Match(str)
+    
+    if m.Success then
+        HandleMatch 
+            (m.Groups.[1].Index-1) 
+            (m.Index+m.Length) 
+            mappings
+            str
+            (ParseUnaryGroups mappings m.Groups)
+        ||> ParseUnaryOperators opers
     else
         (mappings, str)
 
@@ -66,6 +94,7 @@ let private TokenizeReservedWords mappings (str:string) =
     let nstr = str
                 .Replace(" and ", " && ")
                 .Replace(" or ", " || ")
+                .Replace("not", "!")
     (mappings, nstr)
 
 /// Parses strings between double quotes
@@ -127,6 +156,22 @@ let private ParseValues mappings str =
     else
         (mappings, str)
 
+/// Parses variable definitions
+let private ParseVariables mappings str =
+    let m = Regex(
+                "([a-z]\w*)", 
+                RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
+   
+    if m.Success then
+        HandleMatch 
+            (m.Index-1) 
+            (m.Index+m.Length) 
+            mappings 
+            str 
+            (Variable(m.Groups.[1].Value))
+    else
+        (mappings, str)
+
 /// Parses the given string to an expression tree
 let rec internal ParseString mappings str =
     let res = ParseQuotedStrings mappings str
@@ -135,6 +180,7 @@ let rec internal ParseString mappings str =
               ||> ParseFunctions
               ||> ParseVariables
               ||> ParseParentheses
+              ||> ParseUnaryOperators ["!";"-"]
               ||> ParseOperators ["*";"/";"%"]
               ||> ParseOperators ["+";"-"]
               ||> ParseOperators ["<";">";"<=";">="]
@@ -142,7 +188,13 @@ let rec internal ParseString mappings str =
               ||> ParseOperators ["&&";"||"]
               ||> ParseValues
     
-    (fst res).[(snd res)]
+    let d = fst res
+    let k = snd res
+    
+    if d.ContainsKey k then
+        d.[k]
+    else
+        raise (SyntaxError ("Invalid token " + k))
 
 /// Parses the strings between parentheses  
 and private ParseParentheses mappings (str:string) =
@@ -217,21 +269,6 @@ and private ParseFunctions mappings str =
     else
         (mappings, str)
 
-/// Parses variable definitions
-and private ParseVariables mappings str =
-    let m = Regex(
-                "([a-z]\w*)", 
-                RegexOptions.Compiled ||| RegexOptions.IgnoreCase).Match(str)
-   
-    if m.Success then
-        HandleMatch 
-            (m.Index-1) 
-            (m.Index+m.Length) 
-            mappings 
-            str 
-            (Variable(m.Groups.[1].Value))
-    else
-        (mappings, str)
 
 /// Parses the given expression to an expression tree. The returned node can be
 /// passed to <see cref="FCalculator.Evaluator.Evaluate"/>. By using this you

@@ -58,3 +58,11 @@ type ``Given EvaluateExpression is given a valid expression`` ()=
      [<Test>] member this.
         ``when expression is ((1 + 2) * (3 - 1)) / 2 answer is 3`` ()=
             EvaluateExpression "((1 + 2) * (3 - 1)) / 2" |> should equal 3m
+            
+     [<Test>] member this.
+        ``when expression is -1 + -2 answer is -3`` ()=
+            EvaluateExpression "-1 + -2" |> should equal -3m
+            
+     [<Test>] member this.
+        ``when expression is -1 + (-2 + 2) answer is -1`` ()=
+            EvaluateExpression "-1 + (-2 + 2)" |> should equal -1m

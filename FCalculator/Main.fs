@@ -22,3 +22,5 @@ type Node =
     | LesserOrEqualThan of Node * Node
     | LogicalAnd of Node * Node
     | LogicalOr of Node * Node
+    | Not of Node
+    | Negation of Node

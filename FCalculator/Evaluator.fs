@@ -18,7 +18,6 @@ let private equals (o1:obj) (o2:obj) =
 let private builtins = 
     let l = [
         ("if", fun (args:obj list) -> if tobool(args.[0]) then args.[1] else args.[2])
-        ("not", fun (args:obj list) -> box(not(tobool args.[0])))
         ("in", fun (args:obj list) -> box(List.exists (fun i -> i = args.Head) args.Tail))
     ]
     new Map<string, obj list -> obj>(l)
@@ -51,6 +50,8 @@ let rec private Eval (f:Map<string, obj list -> obj>) (v:Map<string,obj>) node =
     | LesserOrEqualThan (l, r) -> box(todec(Eval f v l) <= todec(Eval f v r))
     | LogicalAnd (l, r) -> box(tobool(Eval f v l) && tobool(Eval f v r))
     | LogicalOr (l, r) -> box(tobool(Eval f v l) || tobool(Eval f v r))
+    | Not n -> box(not(unbox(Eval f v n)))
+    | Negation n -> box(-(todec(Eval f v n)))
 
 /// <summary>Evaluates the given node with given functions and variables</summary>
 /// <param name="functions">A map of functions</param>

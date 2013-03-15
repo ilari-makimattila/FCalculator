@@ -50,3 +50,11 @@ type ``Given EvaluateExpression is given a valid boolean expression`` ()=
     [<Test>] member x.
         ``when expression is 1 or 0 answer is true`` ()=
             EvaluateExpression "1 or 0" |> should equal true
+    
+    [<Test>] member x.
+        ``when expression is not(false) then the answer is true`` ()=
+            EvaluateExpression "not(false)" |> should equal true
+            
+    [<Test>] member x.
+        ``when expression is not false then the answer is true`` ()=
+            EvaluateExpression "not false" |> should equal true
