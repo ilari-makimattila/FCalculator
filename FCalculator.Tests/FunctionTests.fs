@@ -11,7 +11,9 @@ type ``Given EvaluateExpressionWithFunctions has a map of funcs and a valid expr
                                              ("square", 
                                               fun o -> box(Convert.ToDecimal(o.Head) * Convert.ToDecimal(o.Head)));
                                              ("mul",
-                                              fun o -> box(Convert.ToDecimal(o.[0]) * Convert.ToDecimal(o.[1]))) ])
+                                              fun o -> box(Convert.ToDecimal(o.[0]) * Convert.ToDecimal(o.[1])));
+                                             ("strcmp",
+                                              fun o -> box(o.[0].ToString().Equals(o.[1].ToString())))])
 
     [<Test>] member x.
         ``when expression is square(2) answer is 4`` ()=    
@@ -44,5 +46,12 @@ type ``Given EvaluateExpressionWithFunctions has a map of funcs and a valid expr
     [<Test>] member x.
         ``when expression is not(false) then the answer is true`` ()=
             EvaluateExpression "not(false)" |> should equal true
-            
-            
+    [<Test>] member x.
+        ``when expression is strcmp("foo", "foo") then the answer is true`` ()=
+            EvaluateExpressionWithFunctions f "strcmp(\"foo\", \"foo\")" |> should equal true
+    [<Test>] member x.
+        ``when expression is strcmp("foo", 1) then the answer is false`` ()=
+            EvaluateExpressionWithFunctions f "strcmp(\"foo\", 1)" |> should equal false
+    [<Test>] member x.
+        ``when expression is mul(4, square(5)) answer is 100`` ()=    
+            EvaluateExpressionWithFunctions f "mul(4, square(5))" |> should equal 100.0m

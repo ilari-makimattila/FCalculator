@@ -172,8 +172,6 @@ and private ParseFunctions mappings str =
                        |> Seq.map string
                        |> String.concat ""
         
-        let escape = ref false
-        let instring = ref false
         let pCount = ref 0
         
         let mutable curParam = ""
@@ -182,30 +180,16 @@ and private ParseFunctions mappings str =
         let mutable skip = false
         let mutable idx = str.IndexOf('(', m.Index + funcName.Length) + 1
         
-        while not parsed do
+        while not parsed && idx < str.Length do
            let c = str.[idx]
            idx <- idx + 1
            match c with
-           | '"' -> if !instring then 
-                        if !escape then 
-                            escape := false
-                        else
-                            instring := false
-                    else
-                        instring := true
-           | '\\' -> if !instring then
-                        escape := true
-                     else
-                        raise (SyntaxError "Invalid escape")
-           | '(' -> if not !instring then
-                        pCount := !pCount + 1
-           | ')' -> if not !instring then
-                        pCount := !pCount - 1
-                        parsed <- true
-           | ',' -> if not !instring then
-                        funcParams <- List.append funcParams [curParam.Trim([|' '; '\t'|])]
-                        curParam <- ""
-                        skip <- true
+           | '(' -> pCount := !pCount + 1
+           | ')' -> pCount := !pCount - 1
+                    parsed <- !pCount = -1
+           | ',' -> funcParams <- List.append funcParams [curParam.Trim([|' '; '\t'|])]
+                    curParam <- ""
+                    skip <- true
            | _ -> ()
            if not parsed && not skip then curParam <- curParam + (string c)
            skip <- false
