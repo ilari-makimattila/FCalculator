@@ -63,13 +63,8 @@ let rec private Eval (f:Map<string, obj list -> obj>) (v:Map<string,obj>) node =
 /// Function and variable names are case sensitive.
 /// </remarks>
 let EvaluateWithFunctionsAndVariables (functions:Map<string, obj list -> obj>) (variables:Map<string,obj>) node =
-    let mutable funcs = builtins
-    for t in functions do
-        funcs <- funcs.Add(t.Key, functions.[t.Key])                  
-    
-    let mutable vars = constants
-    for t in variables do
-        vars <- vars.Add(t.Key, variables.[t.Key])
+    let funcs = Map(Seq.concat [ (Map.toSeq builtins) ; (Map.toSeq functions) ])
+    let vars = Map(Seq.concat [ (Map.toSeq constants) ; (Map.toSeq variables) ])
     
     Eval funcs vars node
 
@@ -89,6 +84,6 @@ let EvaluateExpressionWithVariables variables str =
 let EvaluateExpressionWithFunctions funcs str =
     ParseString Map.empty str |> EvaluateWithFunctionsAndVariables funcs Map.empty
 
-/// Parse and evaluate a strin with custom functions and variables
+/// Parse and evaluate a string with custom functions and variables
 let EvaluateExpressionWithFunctionsAndVariables functions variables str =
     ParseString Map.empty str |> EvaluateWithFunctionsAndVariables functions variables
